@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クイズアプリ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffffff;
+            color: #333333;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 90vw;
+            height: 90vh;
+            overflow-y: auto;
+        }
+        .quiz-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        .question-container {
+            background: #ffffff;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: left;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .title {
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+        .tags a {
+            font-size: 12px;
+            color: #007BFF;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+        input {
+            width: calc(100% - 16px);
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            background: #ffffff;
+            color: #333;
+            border-radius: 5px;
+            box-sizing: border-box;
+            display: block;
+        }
+        .result {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .question-image {
+            width: 100%;
+            height: auto;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="quiz-grid" id="quiz-container"></div>
+    </div>
+    
+    <script>
+        const quiz = [
+            { title: "基本の計算", tags: ["数学", "初級"], question: "1 + 1 は？", answers: ["2"], image: "math1.jpg" },
+            { title: "引き算と割り算", tags: ["数学", "初級", "計算"], question: "5 - 2 は？", answers: ["3"], image: "math2.jpg" },
+            { title: "掛け算の基本", tags: ["数学", "掛け算"], question: "3 × 3 は？", answers: ["9"], image: "math3.jpg" },
+            { title: "穴埋め問題", tags: ["数学", "応用"], question: "①5 + 3 = ? ②6 ÷ 2 = ?", answers: ["8", "3"], image: "math4.jpg" },
+            { title: "平方数", tags: ["数学", "平方"], question: "5 × 5 は？", answers: ["25"], image: "math5.jpg" },
+            { title: "簡単な方程式", tags: ["数学", "方程式"], question: "x + 3 = 5, x は？", answers: ["2"], image: "math6.jpg" },
+            { title: "負の数の計算", tags: ["数学", "負の数"], question: "①-2 + 5 = ? ②4 - 7 = ?", answers: ["3", "-3"], image: "math7.jpg" }
+        ];
+
+        function loadQuestions() {
+            const quizContainer = document.getElementById("quiz-container");
+            quizContainer.innerHTML = "";
+            
+            quiz.forEach((q, index) => {
+                const questionDiv = document.createElement("div");
+                questionDiv.classList.add("question-container");
+                let inputFields = "";
+                q.answers.forEach((_, i) => {
+                    inputFields += `<input type="text" id="answer-${index}-${i}" placeholder="答えを入力" oninput="autoCheck(${index})">`;
+                });
+                
+                const tagList = q.tags.map(tag => `<a href="#">${tag}</a>`).join(" | ");
+                
+                questionDiv.innerHTML = `
+                    <div class="title">
+                        <span>${q.title}</span>
+                        <span class="tags">${tagList}</span>
+                    </div>
+                    <img src="${q.image}" alt="問題の画像" class="question-image">
+                    <p>${q.question}</p>
+                    ${inputFields}
+                    <div class="result" id="result-${index}"></div>
+                `;
+                quizContainer.appendChild(questionDiv);
+            });
+        }
+
+        function autoCheck(index) {
+            let allFilled = true;
+            let correctCount = 0;
+            quiz[index].answers.forEach((correctAnswer, i) => {
+                const inputElement = document.getElementById(`answer-${index}-${i}`);
+                if (inputElement.value.trim() === "") {
+                    allFilled = false;
+                }
+                if (inputElement.value.trim() === correctAnswer) {
+                    correctCount++;
+                }
+            });
+            
+            if (allFilled) {
+                const resultElement = document.getElementById(`result-${index}`);
+                resultElement.textContent = `正解数: ${correctCount} / ${quiz[index].answers.length}`;
+                resultElement.style.color = correctCount === quiz[index].answers.length ? "#28a745" : "#dc3545";
+            }
+        }
+
+        window.onload = loadQuestions;
+    </script>
+</body>
+</html>
