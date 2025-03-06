@@ -1,0 +1,62 @@
+# WUA APIオブジェクトを作成
+$updateSession = New-Object -ComObject Microsoft.Update.Session
+$updateSearcher = $updateSession.CreateUpdateSearcher()
+
+# 検索条件を設定 (インストール済みの更新)
+$searchResult = $updateSearcher.Search("IsInstalled=1")
+
+# 現在の日付を取得
+$currentDate = Get-Date
+
+# 今月の日付範囲を計算
+$startOfMonth = (Get-Date -Year $currentDate.Year -Month $currentDate.Month -Day 1).Date
+$endOfMonth = $startOfMonth.AddMonths(1).AddDays(-1)
+
+# 今月インストールされた更新プログラムをフィルタリング
+$updatesThisMonth = $searchResult.Updates | Where-Object {
+    $_.Date -ge $startOfMonth -and $_.Date -le $endOfMonth
+}
+
+# 結果を表示
+$updatesThisMonth | ForEach-Object {
+    Write-Host "Title: $($_.Title)"
+    Write-Host "Date: $($_.Date)"
+    Write-Host "------------------------------------"
+}
+
+---------------------------------------------------------------------------------------------------------------
+===============================================================================================================
+# COMオブジェクトを作成してWUA APIを利用
+$updateSession = New-Object -ComObject Microsoft.Update.Session
+$updateSearcher = $updateSession.CreateUpdateSearcher()
+
+# 更新プログラムの検索
+$searchResult = $updateSearcher.Search("IsInstalled=0")
+
+# ドライバー以外の更新プログラムをフィルタリング
+$updatesToInstall = $searchResult.Updates | Where-Object { $_.Title -notlike "*Driver*" }
+
+# 更新プログラムのインストール
+$updateInstaller = $updateSession.CreateUpdateInstaller()
+$updateInstaller.Updates = $updatesToInstall
+$installationResult = $updateInstaller.Install()
+
+# 結果の表示
+$installationResult
+# COMオブジェクトを作成してWUA APIを利用
+$updateSession = New-Object -ComObject Microsoft.Update.Session
+$updateSearcher = $updateSession.CreateUpdateSearcher()
+
+# 更新プログラムの検索
+$searchResult = $updateSearcher.Search("IsInstalled=0")
+
+# ドライバー以外の更新プログラムをフィルタリング
+$updatesToInstall = $searchResult.Updates | Where-Object { $_.Title -notlike "*Driver*" }
+
+# 更新プログラムのインストール
+$updateInstaller = $updateSession.CreateUpdateInstaller()
+$updateInstaller.Updates = $updatesToInstall
+$installationResult = $updateInstaller.Install()
+
+# 結果の表示
+$installationResult
