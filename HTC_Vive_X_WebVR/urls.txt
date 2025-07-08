@@ -11,4 +11,4 @@ OpenVRのdll
 https://github.com/ValveSoftware/openvr/tree/master/bin
 
 ViveとSteamVRについての言及
-https://forum.htc.com/topic/7029-viveport-vive-console-steam-steamvr-all-or-nothing/page/2/
+https://forum.htc.com/topic/7029-viveport-vive-console-steam-steamvr-all-or-nothing/page/2/tEfbHuGa(uk)k/Ntnn2wWJvr
