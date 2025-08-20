@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>shelf01を作る</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+    video {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    aside {
+      width: 180px; /* 幅を最小限に */
+      overflow-y: auto;
+      border-left: 1px solid #ccc;
+      padding: 0.5rem;
+      background: #f9f9f9;
+      font-size: 0.85rem;
+    }
+    aside ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    aside li {
+      margin: 0.2rem 0;
+      cursor: pointer;
+      padding: 0.2rem;
+      border-radius: 4px;
+    }
+    aside li.active {
+      background: #cce5ff;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <video id="player" controls>
+      <source src="shelf01.mp4" type="video/mp4">
+      <track id="chaptersTrack" kind="chapters" default>
+    </video>
+  </main>
+  <aside>
+    <h3>チャプター</h3>
+    <ul id="chaptersList"></ul>
+  </aside>
+
+  <script type="text/vtt" id="chaptersVTT">
+WEBVTT
+
+00:00:00.000 --> 00:00:23.410
+ボディーを作成→スケッチを作成→XZ平面選択
+
+00:00:23.410 --> 00:00:35.110
+四角形を描く
+
+00:00:35.110 --> 00:00:45.630
+横線を590.00mm
+
+00:00:45.630 --> 00:01:02.380
+縦線を10.00mm
+
+00:01:02.380 --> 00:01:07.330
+右下の点と横軸を拘束
+
+00:01:07.330 --> 00:01:16:050
+右上の点→左上の点→縦線とクリックし拘束
+
+00:01:16:050 --> 00:01:21.650
+閉じる
+
+00:01:21.650 --> 00:01:38.300
+面に対して対称をチェックし、240.00mm→OK
+
+00:01:38.300 --> 00:01:54.930
+上面をクリックして、スケッチを作成
+
+00:01:54.930 --> 00:02:17.150
+任意の線に外部ジオメトリ作成
+
+00:02:17.150 --> 00:02:37.380
+右上の点から下の横線へ、四角形を描く
+
+00:02:37.380 --> 00:02:46.660
+横線を10.00mm
+
+00:02:46.660 --> 00:03:03.980
+上線と下線に接する四角形を描く
+
+00:03:03.980 --> 00:03:18.600
+左の□と右の□との距離を400.00mm
+
+00:03:18.600 --> 00:03:27.550
+2つの□の横線の長さを同じに
+
+00:03:27.550 --> 00:03:44.250
+左下の点から□の側面へ、四角形を描く
+
+00:03:44.250 --> 00:03:57.930
+指定の線の長さを同じに
+
+00:03:57.930 --> 00:04:02.950
+閉じる
+
+00:04:02.950 --> 00:04:26.650
+330.00mmでOK
+
+00:04:26.650 --> 00:04:40.500
+上面を選択し、スケッチを作成
+
+00:04:40.500 --> 00:04:52.410
+左上の点と右下の点を選択できるようにする
+
+00:04:52.410 --> 00:04:59.450
+左上の点と右下の点を選択し四角形を描く
+
+00:04:59.450 --> 00:05:12.760
+閉じる
+
+00:05:12.760 --> 00:05:24.100
+350.00mmでOK
+
+00:05:24.100 --> 00:05:36.450
+前面を選択し、スケッチを作成
+
+00:05:36.450 --> 00:05:58.200
+任意の外部ジオメトリを作成
+
+00:05:58.200 --> 00:06:04.830
+こんな感じに四角形を描く(上と下の線に付く)
+
+00:06:04.830 --> 00:06:15.550
+右上の点と□の右上との幅を10.00mmに
+
+00:06:15.550 --> 00:06:25.150
+右上の点と□の右上との高さを10.00mmに
+
+00:06:25.150 --> 00:06:44.550
+右下の点と□の右下との高さを10.00mmに
+
+00:06:44.550 --> 00:06:57.830
+□の幅を400.00mm
+
+00:06:57.830 --> 00:07:01.210
+閉じる
+
+00:07:01.210 --> 00:07:10.480
+貫通にして、OK
+
+00:07:10.480 --> 00:07:19.950
+前面を選択し、スケッチを作成
+
+00:07:19.950 --> 00:07:30.010
+貫通させた□の左の線を選択可能にする
+
+00:07:30.010 --> 00:07:36.780
+こんな感じに四角形を描く
+
+00:07:36.780 --> 00:07:43.460
+□の右上と空洞の左上を同じ高さにする
+
+00:07:43.460 --> 00:07:48.550
+同じく□右下と空洞左下も同じ高さにする
+
+00:07:48.550 --> 00:07:58.430
+□と空洞との幅を10.00mmに
+
+00:07:58.430 --> 00:08:04.510
+閉じる
+
+00:08:04.510 --> 00:08:26.550
+230.00mmにし、OK
+
+00:08:26.550 --> 00:08:40.810
+上面を選択し、スケッチを作成
+
+00:08:40.810 --> 00:08:46.750
+上下の線に外部ジオメトリ作成
+
+00:08:46.750 --> 00:09:00.600
+両端に四角形を描く
+
+00:09:00.600 --> 00:09:06.730
+2つの□の幅を同じ長さにする
+
+00:09:06.730 --> 00:09:17.450
+□の幅を10.00mmにする
+
+00:09:17.450 --> 00:09:33.960
+閉じる
+
+00:09:33.960 --> 00:09:59.110
+100.00mmでOK
+
+00:09:59.110 --> 00:10:23.360
+角を選択し10.00mmでフィレット
+
+00:10:23.360 --> 00:10:54:00
+終わり
+  </script>
+
+  <script>
+  const video = document.getElementById('player');
+  const trackEl = document.getElementById('chaptersTrack');
+  const listEl = document.getElementById('chaptersList');
+  const vttText = document.getElementById('chaptersVTT').textContent.trim();
+  const blob = new Blob([vttText], {type:'text/vtt'});
+  trackEl.src = URL.createObjectURL(blob);
+
+  function buildChapters() {
+    const track = trackEl.track || video.textTracks[0];
+    if (!track || !track.cues || track.cues.length === 0) {
+      // cuesがまだ空なら少し待つ
+      setTimeout(buildChapters, 200);
+      return;
+    }
+    for (let cue of track.cues) {
+      const li = document.createElement('li');
+      li.textContent = cue.text;
+      li.addEventListener('click', () => {
+        video.currentTime = cue.startTime;
+        video.play();
+      });
+      listEl.appendChild(li);
+    }
+    video.addEventListener('timeupdate', () => {
+      for (let i=0; i<listEl.children.length; i++) {
+        const li = listEl.children[i];
+        const cue = track.cues[i];
+        li.classList.toggle('active',
+          video.currentTime >= cue.startTime && video.currentTime < cue.endTime
+        );
+      }
+    });
+  }
+
+  video.addEventListener('loadedmetadata', buildChapters);
+</script>
+
+</body>
+</html>
