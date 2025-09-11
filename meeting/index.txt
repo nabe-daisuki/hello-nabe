@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>テキスト比較ツール</title>
+<style>
+  body { margin:0; font-family: sans-serif; }
+  #audio-container { position: sticky; top:0; background:#eee; padding:10px; z-index:10; }
+  #container { display:flex; height:calc(100vh - 50px); overflow:hidden; }
+  .panel { flex:1; overflow-y: auto; border:1px solid #ccc; }
+  .line { display:flex; justify-content:space-between; padding:2px 5px; border-bottom:1px solid #ddd; }
+  .timestamp { cursor:pointer; color:blue; text-decoration:underline; }
+  .text { flex:1; margin-left:5px; }
+  .disabled { opacity:0.3; }
+  .yellow { background: repeating-linear-gradient(
+      45deg, yellow, yellow 5px, transparent 5px, transparent 10px);}
+  .green { background: repeating-linear-gradient(
+      45deg, lightgreen, lightgreen 5px, transparent 5px, transparent 10px);}
+  .edited { color:red; }
+  .delete-btn { cursor:pointer; margin-left:5px; color:red; }
+
+  /* 緑ハッチ */
+.green {
+  background: repeating-linear-gradient(
+    45deg,
+    rgba(144,238,144,0.4), /* 薄緑＋やや濃い目で黄色より見える */
+    rgba(144,238,144,0.4) 5px,
+    transparent 5px,
+    transparent 10px
+  );
+  z-index: 1;
+}
+
+/* 黄色背景は半透明に */
+.yellow {
+  background-color: rgba(255,255,0,0.4);
+  position: relative;
+  z-index: 2;
+}
+
+.red {
+  background: repeating-linear-gradient(
+      45deg, rgba(255,100,100,0.3), rgba(255,100,100,0.3) 5px, transparent 5px, transparent 10px
+  );
+}
+.panel-header {
+  position: sticky;
+  top: 0;
+  background: #f0f0f0;
+  font-weight: bold;
+  padding: 2px 5px;
+  z-index: 5; /* 他の要素より前面に表示 */
+  border-bottom: 1px solid #ccc;
+}
+
+</style>
+</head>
+<body>
+
+<div id="audio-container">
+    <input type="file" id="files" accept=".txt" multiple tabindex="-1">
+<input type="file" id="audioFile" accept="audio/*" tabindex="-1">
+  <!-- <input type="file" id="file1" accept=".txt" tabindex="-1">
+  <input type="file" id="file2" accept=".txt" tabindex="-1"> -->
+  <audio id="audio" controls tabindex="-1"></audio>
+  <label><input type="checkbox" id="autoScroll" checked > 自動スクロール</label>
+  <button id="highlightLeftBtn" tabindex="-1">左をハッチ表示</button>
+  <button id="highlightRightBtn" tabindex="-1">右をハッチ表示</button>
+  <button id="exportGreen" tabindex="-1">緑ハッチ出力</button>
+</div>
+
+<div id="container">
+  <div class="panel" id="leftPanel"></div>
+  <div class="panel" id="rightPanel"></div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
