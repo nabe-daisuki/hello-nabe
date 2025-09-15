@@ -1,1 +1,0 @@
-ffmpeg -i input.wav -af "loudnorm,compand=attacks=0:points=-80/-80|-20/-10|0/-3|20/0,arnndn=m=./rnnoise-models/rnnoise-model.rnnn,atempo=0.9,equalizer=f=3000:t=q:w=2:g=3" output.wav
