@@ -1,3 +1,6 @@
+
+const isTest = true;
+
 const leftPanel = document.getElementById('left-panel');
 const rightPanel = document.getElementById('right-panel');
 const audio = document.getElementById('audio');
@@ -16,6 +19,8 @@ let editing = {
   side: ''
 }
 
+let autoScrollRow = 0;
+let isSelectionPulledOnce = false;
 let selectedRow = 0;
 let selectedSide = 'left';
 
@@ -26,6 +31,13 @@ let audioInfo = {
   MB: 0,
   length: ""
 }
+
+let isEditClosed = true;
+
+selectedStrSide = "";
+selectedStrIdx = -1;
+selectedStrStartPos = -1;
+selectedStrEndPos = -1;
 
 //
 // 列ハッチング処理
@@ -97,6 +109,8 @@ function handleFile(file, side) {
       rightFileName = file.name;
     }
     if(!leftLines.length || !rightLines.length) return;
+    leftPanel.innerHTML = "";
+    rightPanel.innerHTML = "";
     document.getElementById("text-file-names").innerHTML = `①${leftFileName}<br>②${rightFileName}`;
     render();
     document.getElementById("save-btn").classList.remove("btn-disabled");
@@ -122,7 +136,8 @@ function parseLine(line, i, side) {
     text,
     editedText: null,
     disabled: false,
-    color: null
+    color: null,
+    isDammy: false
   };
 }
 
@@ -156,13 +171,149 @@ function render() {
     leftPanel.appendChild(leftDiv);
     rightPanel.appendChild(rightDiv);
 
+    const leftInsertDiv = createInsertLineDiv(i, "left");
+    leftPanel.appendChild(leftInsertDiv);
+    const rightInsertDiv = createInsertLineDiv(i, "right");
+    rightPanel.appendChild(rightInsertDiv);
+
     leftDivs.push(leftDiv);
     rightDivs.push(rightDiv);
   }
 
   syncRowHeights();
   highlightPlayingLine();
+
+  console.log(leftLines);
 }
+
+//
+// 行挿入Div生成
+//
+function createInsertLineDiv(index, side) {
+  const div = document.createElement('div');
+  div.className = 'insert-line';
+
+  // 青線
+  const line = document.createElement('div');
+  line.className = 'blue-line';
+  div.appendChild(line);
+
+  // 〇ボタン
+  const button = document.createElement('button');
+  button.className = 'insert-button';
+  button.textContent = '＋';
+  button.onclick = () => {
+    insertNewLine(index, side);
+  }
+  div.appendChild(button);
+
+  return div;
+}
+
+function insertNewLine(index, side) {
+  let newLineBase = {
+    text: '',
+    editedText: '',
+    color: null,
+    disabled: true,
+    isDammy: true
+  }
+  let leftNewLine, rightNewLine;
+
+  if(side === 'left'){
+    leftNewLine = {
+      side: "left",
+      startTime: leftLines[index].endTime,
+      endTime: leftLines[index].endTime,
+      ...newLineBase
+    }
+    leftLines.splice(index + 1, 0, leftNewLine);
+
+    rightNewLine = {
+      side: "right",
+      startTime: rightLines[rightLines.length-1].endTime,
+      endTime: rightLines[rightLines.length-1].endTime,
+      ...newLineBase
+    }
+    rightLines.push(rightNewLine);
+  } else {
+    rightNewLine = {
+      side: "right",
+      startTime: rightLines[index].endTime,
+      endTime: rightLines[index].endTime,
+      ...newLineBase
+    }
+    rightLines.splice(index + 1, 0, rightNewLine);
+    
+    leftNewLine = {
+      side: "left",
+      startTime: leftLines[leftLines.length-1].endTime,
+      endTime: leftLines[leftLines.length-1].endTime,
+      ...newLineBase
+    }
+    leftLines.push(leftNewLine);
+  }
+
+  removeDependentDammyLine();
+  resetIndex();
+  rerender();
+}
+
+function removeDependentDammyLine(){
+  const lineCount = leftLines.length;
+  if(!leftLines[lineCount-1].isDammy || !rightLines[lineCount-1].isDammy) return;
+  leftLines.pop();
+  rightLines.pop();
+}
+
+function resetIndex(){
+  leftLines.forEach( (line, i) => line.index = i );
+  rightLines.forEach( (line, i) => line.index = i );
+}
+
+function rerender(){
+  leftPanel.innerHTML = '';
+  rightPanel.innerHTML = '';
+
+  // パネルヘッダー(ファイル名)の挿入
+  const leftPanelHeader = document.createElement("div");
+  leftPanelHeader.classList.add("panel-header");
+  leftPanelHeader.textContent = `①${leftFileName}`;
+  leftPanel.appendChild(leftPanelHeader);
+
+  const rightPanelHeader = document.createElement("div");
+  rightPanelHeader.classList.add("panel-header");
+  rightPanelHeader.textContent = `②${rightFileName}`;
+  rightPanel.appendChild(rightPanelHeader);
+
+  leftDivs = [];
+  rightDivs = [];
+
+  for(i = 0;i < leftLines.length;i++){
+    const leftLine = leftLines[i];
+    const rightLine = rightLines[i];
+
+    const leftLineDiv = createLineDiv(leftLine, i, "left");
+    const rightLineDiv = createLineDiv(rightLine, i, "right");
+
+    leftPanel.appendChild(leftLineDiv);
+    rightPanel.appendChild(rightLineDiv);
+
+    const leftInsertDiv = createInsertLineDiv(i, "left");
+    const rightInsertDiv = createInsertLineDiv(i, "right");
+    leftPanel.appendChild(leftInsertDiv);
+    rightPanel.appendChild(rightInsertDiv);
+    
+    leftDivs.push(leftLineDiv);
+    rightDivs.push(rightLineDiv);
+  }
+
+  syncRowHeights();
+  highlightPlayingLine();
+
+  console.log(leftLines);
+}
+
 
 //
 // 行Div生成
@@ -218,6 +369,9 @@ function createLineDiv(line, index, side) {
 
     // 通常の緑ハッチトグル
     div.classList.toggle("green-hatch");
+
+    if(div.classList.contains("green-hatch")) line.color = "g";
+    else line.color = null;
   }
 
   // テキストのダブルクリックイベント
@@ -256,6 +410,7 @@ function createLineDiv(line, index, side) {
       e.target.textContent = "×";
       e.target.parentElement.classList.remove("disabled");
     }
+    syncRowHeights();
   };
 
   div.appendChild(ts);
@@ -286,6 +441,10 @@ function syncRowHeights() {
     const leftRow = leftRows[i];
     const rightRow = rightRows[i];
     if(!leftRow || !rightRow) continue;
+    
+    leftRow.style.height = "auto";
+    rightRow.style.height = "auto";
+
     const maxHeight = Math.max(leftRow.offsetHeight, rightRow.offsetHeight);
     leftRow.style.height = maxHeight + 'px';
     rightRow.style.height = maxHeight + 'px';
@@ -326,10 +485,13 @@ rightPanel.addEventListener('scroll', ()=>{ leftPanel.scrollTop = rightPanel.scr
 // 音声連動スクロール
 //
 audio.ontimeupdate = () => {
-    if(autoScrollCheckbox.checked){
-    const lines = leftLines;
-    const idx = lines.findIndex(l => audio.currentTime >= l.startTime && audio.currentTime < l.endTime);
-    if(idx >= 0) scrollToLine(idx);
+  if(autoScrollCheckbox.checked){
+    const leftLinesidx = leftLines.findIndex(l => audio.currentTime >= l.startTime && audio.currentTime < l.endTime && !l.isDammy);
+    const rightLinesidx = rightLines.findIndex(l => audio.currentTime >= l.startTime && audio.currentTime < l.endTime && !l.isDammy);
+    if(leftLinesidx >= 0 && rightLinesidx >= 0){
+      if(leftLinesidx > rightLinesidx) scrollToLine(rightLinesidx);
+      else scrollToLine(leftLinesidx);
+    }
   }
   highlightPlayingLine();
 }
@@ -338,15 +500,25 @@ audio.ontimeupdate = () => {
 // 左右スクロール同期(プログラム)
 //
 function scrollToLine(index){
-  const lineHeight = leftPanel.firstChild?.offsetHeight || 20;
-  leftPanel.scrollTop = index * lineHeight;
-  rightPanel.scrollTop = index * lineHeight;
+  const insertLineMargin = 4;
+  const insertLineHeight = document.querySelector(".insert-line").offsetHeight + insertLineMargin;
+  let lineTopHeight = 0;
+  for(i = 0; i < index; i++){
+    lineTopHeight += leftDivs[i].offsetHeight + insertLineHeight;
+  }
+  
+  leftPanel.scrollTop = lineTopHeight;
+  rightPanel.scrollTop = lineTopHeight;
+  autoScrollRow = index;
 }
 
 //
 // ウィンドウリサイズイベント
 //
-window.addEventListener('resize', syncRowHeights);
+window.addEventListener('resize', () => {
+  setComparisonContainerH();
+  syncRowHeights();
+});
 
 //
 // 緑ハッチ出力処理
@@ -460,8 +632,10 @@ ${line.side}
 ${line.text}
 $$$$$
 ${line.editedText}
+#####
 ${line.disabled}
 ${line.color}
+${line.isDammy}
 @@@@@
 `;
   });
@@ -472,8 +646,10 @@ ${line.side}
 ${line.text}
 $$$$$
 ${line.editedText}
+#####
 ${line.disabled}
 ${line.color}
+${line.isDammy}
 @@@@@
 `;
   });
@@ -531,9 +707,13 @@ document.getElementById('reload-file-input').addEventListener('change', e => {
   
   const reader = new FileReader();
   reader.onload = e => {
+    leftLines = [];
+    rightLines = [];
+
     let stateNum = 0;
     let lineInfo = {};
     let text = [];
+    let editedText = [];
     let hasEnteredAudioBlock = false;
     let noAudio = false;
     let isFileEnd = false;
@@ -581,6 +761,7 @@ document.getElementById('reload-file-input').addEventListener('change', e => {
         stateNum = 0;
         lineInfo = {};
         text = [];
+        editedText = [];
         return;
       }
 
@@ -592,17 +773,24 @@ document.getElementById('reload-file-input').addEventListener('change', e => {
           lineInfo.side = line;
           break;
         case 2:
-          lineInfo.time = line;
+          const match = line.match(/\[(\d+):(\d+):(\d+) -> (\d+):(\d+):(\d+)\]/);
+          const [, sh, sm, ss, eh, em, es] = match;
+          lineInfo.startTime = +sh*3600 + +sm*60 + +ss;
+          lineInfo.endTime = +eh*3600 + +em*60 + +es;
           break;
         case 3:
-          if(line !== "$$$$$"){
-            text.push = line;
+          if(line != "$$$$$"){
+            text.push(line);
             return;
           }
           lineInfo.text = text.join("\n");
           break;
         case 4:
-          lineInfo.editedText = line === "null" ? null : line;
+          if(line != "#####"){
+            editedText.push(line);
+            return;
+          }
+          lineInfo.editedText = editedText[0] === "null" ? null : editedText.join("\n");
           break;
         case 5:
           lineInfo.disabled = line === "true" ? true : false;
@@ -610,17 +798,23 @@ document.getElementById('reload-file-input').addEventListener('change', e => {
         case 6:
           lineInfo.color = line === "null" ? null : line;
           break;
+        case 7:
+          lineInfo.isDammy = line === "true" ? true : false;
+          break;
       }
       stateNum+=1; 
     });
-      console.log(rightLines);
 
     leftFileName = "ー";
     rightFileName = "ー";
 
     if(!leftLines.length || !rightLines.length) return;
+    leftPanel.innerHTML = "";
+    rightPanel.innerHTML = "";
     document.getElementById("text-file-names").innerHTML = `①${leftFileName}<br>②${rightFileName}`;
     render();
+
+    console.log(leftLines);
 
     document.getElementById("save-btn").classList.remove("btn-disabled");
     document.getElementById("save-btn").disabled = false;
@@ -662,8 +856,10 @@ document.addEventListener('keydown', (e)=>{
     }
   }
 
+  
   const isEditing = document.getElementById("edit-overlay").style.display === "flex";
-  if(isEditing) return;
+
+  if(isEditing || !isEditClosed) return;
 
   const maxRow = Math.max(leftLines.length, rightLines.length) - 1;
   switch(e.key){
@@ -731,24 +927,64 @@ document.addEventListener('keydown', (e)=>{
 // 選択行の赤線表示
 //
 function highlightSelectedDiv(){
-  leftDivs.forEach((div,i)=>{
-    if(i===selectedRow && selectedSide==='left') div.style.outline='2px solid red';
-    else div.style.outline='none';
-  });
-  rightDivs.forEach((div,i)=>{
-    if(i===selectedRow && selectedSide==='right') div.style.outline='2px solid red';
-    else div.style.outline='none';
-  });
-
-  // 選択行が表示されるようスクロール
-  const panel = selectedSide==='left' ? leftPanel : rightPanel;
-  const div = (selectedSide==='left' ? leftDivs[selectedRow] : rightDivs[selectedRow]);
-  if(div){
-    const top = div.offsetTop;
-    const bottom = top + div.offsetHeight;
-    if(panel.scrollTop > top) panel.scrollTop = top;
-    else if(panel.scrollTop + panel.clientHeight < bottom) panel.scrollTop = bottom - panel.clientHeight;
+  console.log(selectedRow);
+  console.log(selectedSide);
+  if(!isInViewport(leftDivs[selectedRow]) && !isSelectionPulledOnce){
+    isSelectionPulledOnce = true;
+    selectedRow = autoScrollRow;
+    if(selectedSide === "left"){
+      leftDivs.forEach((div,i)=>{
+        if(i===selectedRow && selectedSide==='left') div.style.border='1px solid red';
+        else div.style.border='1px solid rgba(255, 255, 255, 1)';
+      });
+      rightDivs.forEach((div,i)=>div.style.border='1px solid rgba(255, 255, 255, 1)');
+    }else{
+      rightDivs.forEach((div,i)=>{
+        if(i===selectedRow && selectedSide==='right') div.style.border='1px solid red';
+        else div.style.border='1px solid rgba(255, 255, 255, 1)';
+      });
+      leftDivs.forEach((div,i)=>div.style.border='1px solid rgba(255, 255, 255, 1)');
+    }
+  }else{
+    if(!isInViewport(leftDivs[selectedRow]) && autoScrollCheckbox.checked) autoScrollCheckbox.checked = false;
+    leftDivs.forEach((div,i)=>{
+      if(i===selectedRow && selectedSide==='left') div.style.border='1px solid red';
+      else div.style.border='1px solid rgba(255, 255, 255, 1)';
+    });
+    rightDivs.forEach((div,i)=>{
+      if(i===selectedRow && selectedSide==='right') div.style.border='1px solid red';
+      else div.style.border='1px solid rgba(255, 255, 255, 1)';
+    });
   }
+
+  if(autoScrollCheckbox.checked) return;
+  const rect = leftDivs[selectedRow].getBoundingClientRect();
+  const panelRect = document.getElementById("comparison-container").getBoundingClientRect();
+  const panelHeight = document.getElementById("comparison-container").offsetHeight;
+  
+  // panelの中心から上下[range]pxほどに選択行を想定
+  const range = 200;
+  const viewableAreaTop = panelRect.bottom - ( panelHeight / 2 ) - range;
+  const viewableAreaBottom = panelRect.bottom - ( panelHeight / 2 ) + range;
+
+  if(rect.top > viewableAreaTop && rect.bottom < viewableAreaBottom) return;
+
+  let scrollDiff = 0;
+  if(rect.top < viewableAreaTop) scrollDiff = -leftDivs[selectedRow].offsetHeight * 2;
+  else scrollDiff = leftDivs[selectedRow].offsetHeight * 2;
+
+  leftPanel.scrollTop = leftPanel.scrollTop + scrollDiff;
+  rightPanel.scrollTop = rightPanel.scrollTop + scrollDiff;
+}
+
+function isInViewport(line) {
+  const rect = line.getBoundingClientRect();
+  const panelRect = document.getElementById("comparison-container").getBoundingClientRect();
+  const panelHeaderHeight = document.querySelector(".panel-header").offsetHeight;
+  return (
+    rect.top > panelRect.top + panelHeaderHeight &&
+    rect.bottom < panelRect.bottom
+  );
 }
 
 //
@@ -764,6 +1000,7 @@ function openEditModal(line){
 
   textarea.value = line.editedText || line.text;
   document.getElementById("edit-overlay").style.display = "flex";
+  isEditClosed = false;
   textarea.focus();
 }
 
@@ -780,9 +1017,10 @@ function setAudioEvent(){
     const file = e.target.files[0];
     if(!file) return;
 
-    audioInfo.bytes = file.size.toLocaleString();
-    audioInfo.KB = (audioInfo.bytes / 1024).toFixed(2);
-    audioInfo.MB = (audioInfo.bytes / 1024 / 1024).toFixed(2);
+    let bytes = file.size;
+    audioInfo.bytes = bytes.toLocaleString();
+    audioInfo.KB = (bytes / 1024).toFixed(2);
+    audioInfo.MB = (bytes / 1024 / 1024).toFixed(2);
 
     audioInfo.fileName = file.name;
     document.getElementById("audio-file-name").textContent = audioInfo.fileName;
@@ -811,6 +1049,7 @@ function setLineText(editedText){
     
     textSpan.textContent = editedText;
     textSpan.classList.add("edited");
+    syncRowHeights();
   }
 
   editing.index = -1;
@@ -829,6 +1068,9 @@ function setEditToolEvent(){
       if(e.shiftKey){
         e.preventDefault();
         document.getElementById("edit-ok-button").click();
+        setTimeout( () => {
+          isEditClosed = true;
+        },500);
       }
     }
   }
@@ -852,12 +1094,131 @@ audio.addEventListener('loadedmetadata', () => {
 
   const formattedTime = `${hours}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
   audioInfo.length = formattedTime;
-
-  URL.revokeObjectURL(audio.src);
 });
 
 window.onload= () =>{
   setComparisonContainerH();
   setAudioEvent(); 
   setEditToolEvent();  
+}
+
+window.addEventListener("focus", () => {
+  document.getElementById("inactive-overlay").style.display = "none";
+});
+
+audio.addEventListener("focus", () => {
+  audio.blur();
+});
+
+autoScrollCheckbox.addEventListener("change", e => {
+    if(e.target.checked) isSelectionPulledOnce = false;
+});
+
+document.getElementById("green-hatching-left-btn").addEventListener("focus", () =>{
+  document.getElementById("green-hatching-left-btn").blur();
+});
+document.getElementById("green-hatching-right-btn").addEventListener("focus", () =>{
+  document.getElementById("green-hatching-right-btn").blur();
+});
+document.getElementById("save-btn").addEventListener("focus", () =>{
+  document.getElementById("save-btn").blur();
+});
+document.getElementById("named-save-btn").addEventListener("focus", () =>{
+  document.getElementById("named-save-btn").blur();
+});
+document.getElementById("exportGreen").addEventListener("focus", () =>{
+  document.getElementById("exportGreen").blur();
+});
+
+
+window.addEventListener("blur", () => {
+  if(isTest) return;
+  document.getElementById("inactive-overlay").style.display = "flex";
+  if(!audio.paused) audio.pause();
+});
+
+
+function getSelectionOffset(element) {
+    const selection = window.getSelection();
+    if (selection.rangeCount === 0) return null;
+
+    const range = selection.getRangeAt(0);
+    const preRange = document.createRange();
+    preRange.selectNodeContents(element);
+    preRange.setEnd(range.startContainer, range.startOffset);
+
+    const startOffset = preRange.toString().length; // 文中の開始位置
+    const endOffset = startOffset + range.toString().length; // 終了位置
+
+    return { startOffset, endOffset };
+}
+
+document.addEventListener('mousedown', function(e) {
+  if (e.button !== 1) return;
+  e.preventDefault();
+
+  const selection = window.getSelection();
+  if (selection.isCollapsed) return;
+
+  const text = selection.toString();
+  if (text.length == 0) return;
+
+  const selectionElement = selection.getRangeAt(0).startContainer.parentElement;
+  if (!selectionElement.classList.contains("text")) return;
+
+  [selectedStrIdx, selectedStrSide]  = leftDivs.indexOf(selectionElement.parentElement) == -1
+    ? [rightDivs.indexOf(selectionElement.parentElement), "right"]
+    : [leftDivs.indexOf(selectionElement.parentElement), "left"];
+
+  console.log(selectedStrIdx, selectedStrSide);
+  
+  const offsets = getSelectionOffset(selectionElement);
+  selectedStrStartPos = offsets.startOffset;
+  selectedStrEndPos = offsets.endOffset;
+
+  const menuWidth = menu.offsetWidth || 150; // 未表示ならデフォルト幅
+  const menuHeight = menu.offsetHeight || 100;
+  const winWidth = window.innerWidth;
+  const winHeight = window.innerHeight;
+
+  let x = e.clientX;
+  let y = e.clientY;
+
+  // 右端にはみ出すなら調整
+  if (x + menuWidth > winWidth) {
+    x = winWidth - menuWidth - 5;
+  }
+  // 下端にはみ出すなら調整
+  if (y + menuHeight > winHeight) {
+    y = winHeight - menuHeight - 5;
+  }
+
+  menu.style.left = `${x}px`;
+  menu.style.top = `${y}px`;
+  menu.style.display = 'block';
+});
+
+document.addEventListener('click', function() {
+  menu.style.display = 'none';
+});
+
+function replaceSelectedStr(elem){
+  console.log(elem);
+  let textSpan = null;
+  if(selectedStrSide === "left"){
+    textSpan = leftDivs[selectedStrIdx].querySelector(".text");
+  }else{
+    textSpan = rightDivs[selectedStrIdx].querySelector(".text");
+  }
+  const replacedText = textSpan.textContent.substring(0, selectedStrStartPos) + elem.textContent + textSpan.textContent.substring(selectedStrEndPos);
+  textSpan.textContent = replacedText;
+
+  editing.side = selectedStrSide;
+  editing.index = selectedStrIdx;
+  setLineText(replacedText);
+
+  selectedStrSide = "";
+  selectedStrIdx = -1;
+  selectedStrStartPos = -1;
+  selectedStrEndPos = -1;
 }
