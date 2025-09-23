@@ -1,0 +1,27 @@
+@charset "utf-8";
+
+.auto-scroll-switch{ display:inline-flex; align-items:center; gap:12px; cursor:pointer; font-family:system-ui; }
+.auto-scroll-switch input{ position:absolute; opacity:0; width:0; height:0; pointer-events:none; }
+.auto-scroll-switch .track{
+  width:44px; height:26px; border-radius:999px; background:linear-gradient(180deg,#f0f2f5,#eef1f6);
+  padding:3px; box-sizing:border-box; display:inline-flex; align-items:center;
+  transition:background .18s ease, box-shadow .18s ease;
+}
+.auto-scroll-switch .thumb{
+  width:20px; height:20px; border-radius:50%; background:white;
+  box-shadow:0 2px 6px rgba(2,6,23,0.12);
+  transform:translateX(0);
+  transition:transform .18s cubic-bezier(.2,.9,.2,1);
+}
+.auto-scroll-switch input:checked ~ .track{
+  background:linear-gradient(180deg,#7c3aed,#5b21b6);
+  box-shadow: 0 6px 18px rgba(124,58,237,0.12);
+}
+.auto-scroll-switch input:checked ~ .track .thumb{
+  transform:translateX(18px);
+}
+.auto-scroll-switch input:focus-visible ~ .track{
+  outline:3px solid rgba(124,58,237,0.12);
+  outline-offset:3px;
+}
+.auto-scroll-switch .t{ font-size:14px; color:#0b1220; }

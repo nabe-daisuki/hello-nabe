@@ -1,0 +1,209 @@
+<div contenteditable
+  id="text"
+  style="
+    width: 300px;
+    border: 1px solid black;
+    padding: 4px;
+    position: relative;
+  "
+></div>
+<input id="hiddenInput" style="position: relative; opacity: 0" />
+<div id="cursor"></div>
+
+<div style="position:relative;">
+  <span>1</span>
+  <span>2</span>
+  <span>3</span>
+  <span>4</span>
+  <span>5</span>
+  <span>6</span>
+  <span>7</span>
+  <span>8</span>
+  <span>9</span>
+  <span>10</span>
+</div>
+
+<input>
+
+<style>
+  #cursor {
+    position: absolute;
+    width: 1px;
+    background: black;
+    display: none;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  span.unconfirmed {
+    text-decoration: underline;
+    color: gray;
+  }
+</style>
+
+<script>
+  document.addEventListener("keydown", e => {
+    console.log(e);
+  });
+  const textDiv = document.getElementById("text");
+  const cursor = document.getElementById("cursor");
+  const hiddenInput = document.getElementById("hiddenInput");
+
+  let content = []; // 確定文字
+  let cursorIndex = 0; // カーソル位置
+  let composition = ""; // 未確定文字
+
+  render();
+
+  // クリックでカーソル移動
+  textDiv.addEventListener("click", (e) => {
+    hiddenInput.focus();
+
+    let range;
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(e.clientX, e.clientY);
+      range = document.createRange();
+      range.setStart(pos.offsetNode, pos.offset);
+    } else if (document.caretRangeFromPoint) {
+      range = document.caretRangeFromPoint(e.clientX, e.clientY);
+    }
+
+    if (range) {
+      let node = range.startContainer;
+      let offset = range.startOffset;
+      const spans = Array.from(textDiv.querySelectorAll("span")).filter(
+        (s) => !s.classList.contains("unconfirmed")
+      );
+      let index = 0;
+      for (let i = 0; i < spans.length; i++) {
+        if (spans[i].firstChild === node) {
+          index += offset;
+          break;
+        } else {
+          index += spans[i].textContent.length;
+        }
+      }
+      cursorIndex = Math.min(index, content.length);
+      render();
+    }
+  });
+
+  // キー操作
+  hiddenInput.addEventListener("keydown", (e) => {
+    if (composition) return;
+
+    if (e.key === "Backspace") {
+      if (cursorIndex > 0) {
+        content.splice(cursorIndex - 1, 1);
+        cursorIndex--;
+        render();
+      }
+      e.preventDefault();
+    } else if (e.key === "Delete") {
+      if (cursorIndex < content.length) {
+        content.splice(cursorIndex, 1);
+        render();
+      }
+      e.preventDefault();
+    } else if (e.key === "ArrowLeft") {
+      if (cursorIndex > 0) cursorIndex--;
+      render();
+      e.preventDefault();
+    } else if (e.key === "ArrowRight") {
+      if (cursorIndex < content.length) cursorIndex++;
+      render();
+      e.preventDefault();
+    }
+  });
+
+  // 半角文字入力とIME確定文字を1つの流れで処理
+  hiddenInput.addEventListener("input", (e) => {
+    if (composition) return; // 変換中は無視
+    if (e.isComposing) return; // IME確定直後の input は無視
+    const value = e.target.value;
+    for (const ch of value) {
+      content.splice(cursorIndex, 0, ch);
+      cursorIndex++;
+    }
+    hiddenInput.value = "";
+    render();
+  });
+
+  // IME未確定文字
+  hiddenInput.addEventListener("compositionupdate", (e) => {
+    composition = e.data;
+    render();
+  });
+
+  // IME確定文字
+  hiddenInput.addEventListener("compositionend", (e) => {
+    const value = e.data;
+    for (const ch of value) {
+      content.splice(cursorIndex, 0, ch);
+      cursorIndex++;
+    }
+    composition = "";
+    hiddenInput.value = ""; // 確定後にリセット
+    render();
+  });
+
+  // レンダリング
+  function render() {
+    textDiv.innerHTML = "";
+    let spanNodes = [];
+
+    for (let i = 0; i < content.length; i++) {
+      const span = document.createElement("span");
+      span.textContent = content[i];
+      textDiv.appendChild(span);
+      spanNodes.push(span);
+    }
+
+    // 未確定文字がある場合はカーソルの前に表示
+    if (composition) {
+      const span = document.createElement("span");
+      span.textContent = composition;
+      span.className = "unconfirmed";
+      textDiv.insertBefore(span, spanNodes[cursorIndex] || null);
+      positionCursor(span, "before");
+    } else {
+      // カーソルを span の間に置く
+      if (cursorIndex === content.length) {
+        // 末尾
+        const lastSpan = spanNodes[cursorIndex - 1];
+        if (lastSpan) {
+          positionCursor(lastSpan, "after");
+        } else {
+          // 文字が1つもない場合
+          cursor.style.left = "0px";
+          cursor.style.top = "0px";
+          cursor.style.height = "1em";
+          cursor.style.display = "block";
+        }
+      } else {
+        const currentSpan = spanNodes[cursorIndex];
+        if (currentSpan) {
+          positionCursor(currentSpan, "before");
+        }
+      }
+    }
+  }
+
+  // カーソル位置調整
+  function positionCursor(target, where) {
+    const parentRect = textDiv.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+
+    if (where === "before") {
+      cursor.style.left = rect.left - parentRect.left + "px";
+    } else if (where === "after") {
+      cursor.style.left = rect.right - parentRect.left + "px";
+    }
+    cursor.style.top = rect.top - parentRect.top + "px";
+    cursor.style.height = rect.height;
+    cursor.style.display = "block";
+  }
+</script>

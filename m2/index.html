@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>テキスト比較ツール</title>
+<style>
+  body { margin:0; font-family: sans-serif; }
+
+  
+  /*@@@@@@@@*/
+  /* header */
+  /*@@@@@@@@*/
+  #header {
+    position: sticky;
+    top:0;
+    background:#e7e7e7;
+    padding:10px;
+    z-index:10;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*********/
+  /* tools */
+  /*********/
+  #tools {
+    display: flex;
+  }
+
+  /***********************/
+  /* text-file-input-box */
+  /***********************/
+  #text-file-input-box {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+  }
+  #text-file-input-box input[type="file"] {
+    display: none;
+  }
+  #text-file-input-box label {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+  }
+  #text-file-input-box .file-name {
+    margin-left: 10px;
+    font-family: sans-serif;
+  }
+
+  /************************/
+  /* audio-file-input-box */
+  /************************/
+  #audio-file-input-box {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+  }
+  #audio-file-input-box input[type="file"] {
+    display: none; /* 実際の input は非表示 */
+  }
+  #audio-file-input-box label {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+  }
+  #audio-file-input-box .file-name {
+    margin-left: 10px;
+    font-family: sans-serif;
+  }
+
+  /*******************/
+  /* auto-scroll-box */
+  /*******************/
+  #auto-scroll-box {
+    margin-right: 20px;
+  }
+
+  /************/
+  /* hatching */
+  /************/
+  #hatching {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-right: 20px;
+  }
+
+  /********/
+  /* save */
+  /********/
+  #save {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-right: 20px;
+  }
+
+  /**********/
+  /* export */
+  /**********/
+  #export {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-right: 20px;
+  }
+
+  /*************************/
+  /* reload-file-input-box */
+  /*************************/
+  #reload-file-input-box {
+    display: flex;
+    flex-direction: column;
+    margin-right: 20px;
+  }
+  #reload-file-input-box input[type="file"] {
+    display: none; /* 実際の input は非表示 */
+  }
+  #reload-file-input-box label {
+    background-color: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: sans-serif;
+  }
+  #reload-file-input-box .file-name {
+    margin-left: 10px;
+    font-family: sans-serif;
+  }
+
+  /*********/
+  /* audio */
+  /*********/
+  #audio {
+    padding-bottom: 10px;
+    width: 100%;
+  }
+
+
+
+  /*@@@@@@@@@@@@@@@@@@@@@@*/
+  /* comparison-container */
+  /*@@@@@@@@@@@@@@@@@@@@@@*/
+  #comparison-container {
+    display:flex;
+    overflow:hidden;
+  }
+
+  /*********/
+  /* panel */
+  /*********/
+  .panel {
+    flex:1;
+    overflow-y: auto;
+    border:1px solid #ccc;
+  }
+  .panel-header {
+    position: sticky;
+    top: 0;
+    background: #f0f0f0;
+    font-weight: bold;
+    padding: 2px 5px;
+    z-index: 5; /* 他の要素より前面に表示 */
+    border-bottom: 1px solid #ccc;
+  }
+  .line {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 5px;
+    border: 1px solid rgba(255, 255, 255, 1);
+  }
+  .line.selected {
+    border: 1px solid red;
+  }
+  .timestamp {
+    cursor:pointer;
+    color:blue;
+    text-decoration:underline;
+  }
+  .text {
+    flex:1;
+    margin-left:5px;
+    overflow: hidden;
+    resize: none;
+  }
+  textarea {
+    appearance: none;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;  
+  }
+  .disabled {
+    opacity:0.3;
+  }
+  .edited {
+    color:red;
+  }
+  .invalid-button {
+    cursor:pointer;
+    margin-left:5px;
+    color:red;
+  }
+
+  /* 緑ハッチ */
+  .green-hatch {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(144,238,144,0.4), /* 薄緑＋やや濃い目で黄色より見える */
+      rgba(144,238,144,0.4) 5px,
+      transparent 5px,
+      transparent 10px
+    );
+    z-index: 1;
+  }
+  .red-hatch {
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255,100,100,0.3),
+        rgba(255,100,100,0.3) 5px,
+        transparent 5px,
+        transparent 10px
+    );
+  }
+  /* 黄色背景は半透明に */
+  .yellow-hatch {
+    background-color: rgba(255,255,0,0.4);
+    position: relative;
+    z-index: 2;
+  }
+  
+
+
+  /*@@@@@@@@@@@@@@*/
+  /* edit-overlay */
+  /*@@@@@@@@@@@@@@*/
+  #edit-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.3) ;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  /******************/
+  /* edit-container */
+  /******************/
+  #edit-container {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+  }
+  #edit-container textarea {
+    width: 400px;
+    height: 200px;
+    font-size: 18px;
+  }
+
+  /*************************/
+  /* edit-button-container */
+  /*************************/
+  #edit-button-container {
+    margin-top: 5px;
+  }
+
+
+.insert-line {
+  display: flex;
+  align-items: center;
+  margin: 2px 0;
+}
+
+.blue-line {
+  flex: 1;
+  height: 2px;
+  background-color: rgb(188, 188, 255);
+  margin-right: 5px;
+}
+
+.insert-button {
+  border: 0px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  cursor: pointer;
+}
+#inactive-overlay {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  left: 0;
+  position: fixed;
+  z-index: 2000;
+  font-size: 80px;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(128,128,128,0.9);
+}
+#sub-comment{
+  font-size: 40px;
+  color: rgb(70, 70, 70);
+}
+
+</style>
+  <link rel="stylesheet" href="auto-scroll-switch.css">
+  <link rel="stylesheet" href="action-button.css">
+  <link rel="stylesheet" href="flex-textarea.css">
+  <link rel="stylesheet" href="contextmenu.css">
+</head>
+<body>
+
+
+
+<div id="header">
+  <audio id="audio" loop controls tabindex="-1"></audio>
+
+  <div id="tools">
+    <div id="text-file-input-box">
+      <label for="text-file-input">テキストファイルを選択する</label>
+      <span class="file-name" id="text-file-names">①未選択<br>②未選択</span>
+      <input type="file" id="text-file-input" accept=".txt" multiple tabindex="-1">
+    </div>
+
+    <div id="audio-file-input-box">
+      <label for="audio-file-input">会議音声を選択する</label>
+      <span class="file-name" id="audio-file-name"></span>
+      <input type="file" id="audio-file-input" accept="audio/*" tabindex="-1">
+    </div>
+
+    <div id="auto-scroll-box">
+      <label for="auto-scroll" class="auto-scroll-switch">
+        <input type="checkbox" id="auto-scroll" checked>
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        <span class="t">自動スクロール</span>
+      </label>
+    </div>
+
+    <div id="hatching">
+      <button id="green-hatching-left-btn" class="btn-neutral" tabindex="-1">左列を緑ハッチ</button>
+      <button id="green-hatching-right-btn" class="btn-neutral" tabindex="-1">右列を緑ハッチ</button>
+    </div>
+
+    <div id="save">
+      <button id="save-btn" class="btn-neutral btn-disabled" tabindex="-1" disabled>状態保存</button>
+      <button id="named-save-btn" class="btn-neutral btn-disabled" tabindex="-1" disabled>名前を付けて保存</button>
+    </div>
+
+    <div id="export">
+      <button id="exportGreen" class="btn-green" tabindex="-1">緑ハッチ出力</button>
+    </div>
+
+    <div id="reload-file-input-box">
+      <label for="reload-file-input">保存データ読込</label>
+      <span class="file-name" id="reload-file-name"></span>
+      <input type="file" id="reload-file-input" accept=".txt" tabindex="-1">
+    </div>
+  </div>
+
+</div>
+
+
+<div id="comparison-container">
+  <div class="panel" id="left-panel"></div>
+  <div class="panel" id="right-panel"></div>
+</div>
+
+<div id="menu" class="context-menu">
+</div>
+
+<div id="edit-overlay">
+  <div id="edit-container">
+    <textarea></textarea>
+    <div id="edit-button-container">
+      <button id="edit-ok-button">確定</button>
+      <button id="edit-cancel-button">戻る</button>
+    </div>
+  </div>
+</div>
+
+<div id="inactive-overlay">
+  <div id="main-comment">
+    本ページをご利用する場合は、<br>
+    画面をクリックしてください。
+  </div>
+  <div id="sub-comment">（テキストファイルや音声ファイル選択等の場合は除く）</div>
+</div>
+
+<script src="app.js"></script>
+<script src="hachingbtn.js"></script>
+<script src="contextmenu.js"></script>
+
+</body>
+</html>
