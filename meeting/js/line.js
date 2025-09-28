@@ -8,6 +8,8 @@ class Line {
     editedText: null,
     disabled  : false,
     color     : null,
-    isDammy   : false
+    hided     : false,
+    checked   : false,
+    isDummy   : false,
   }
 }
