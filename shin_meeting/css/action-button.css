@@ -1,0 +1,48 @@
+@charset "utf-8";
+#hatching button,
+#effect button,
+#save button,
+#export button {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* ニュートラル（白＋グレー） */
+.btn-neutral {
+  background: #fff;
+  border: 1px solid #d1d5db; /* グレー */
+  color: #374151; /* ダークグレー文字 */
+}
+.btn-neutral:hover {
+  background: #f3f4f6;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.btn-disabled {
+  pointer-events: none;
+  background-color: gray;
+}
+
+/* 緑（成功や実行系） */
+.btn-green {
+  background: #10b981;
+  color: #fff;
+}
+.btn-green:hover {
+  background: #059669;
+  box-shadow: 0 2px 8px rgba(16,185,129,0.4);
+}
+
+/* オレンジ（注意や変化系） */
+.btn-orange {
+  background: #f97316;
+  color: #fff;
+}
+.btn-orange:hover {
+  background: #ea580c;
+  box-shadow: 0 2px 8px rgba(249,115,22,0.4);
+}

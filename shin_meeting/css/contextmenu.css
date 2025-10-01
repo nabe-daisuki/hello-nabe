@@ -1,0 +1,31 @@
+@charset "utf-8";
+
+.context-menu {
+  position: fixed; /* 画面座標基準 */
+  display: none;
+  flex-direction: column;
+  border: 1px solid #333;
+  padding: 4px;
+  width: 250px;
+  background: #fff;
+  z-index: 1000;
+}
+.menu-row {
+  display: flex;
+}
+.menu-item {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  flex: 1;
+}
+.sub-menu {
+  display: flex;
+  flex-direction: column;
+  margin-left: 4px;
+}
+.separator {
+  height: 1px;
+  background: #999;
+  margin: 4px 0;
+}
